@@ -16,7 +16,7 @@
 (defvar enabled-modules '())
 (load-file "~/.emax")
 (user-init)
-(add-to-list 'enabled-modules 'core)
+(mapcar (lambda (module) (add-to-list 'enabled-modules module)) '(defaults core keybinds))
 (el-init-load "~/.emacs.d/modules"
 	      :subdirectories '(".")
 	      :wrappers '(el-init-require/record-error
