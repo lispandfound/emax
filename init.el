@@ -14,12 +14,13 @@
 (use-package el-init
   :ensure t)
 (defvar enabled-modules '())
+(setq custom-file "~/.emacs.d/custom.el")
 (load-file "~/.emax")
 (user-init)
-(mapcar (lambda (module) (add-to-list 'enabled-modules module)) '(defaults core keybinds))
+(mapcar (lambda (module) (add-to-list 'enabled-modules module)) '(defaults core keybinds themes splash))
 (el-init-load "~/.emacs.d/modules"
 	      :subdirectories '(".")
 	      :wrappers '(el-init-require/record-error
 			  el-init-require/system-case))
 (user-config)
-
+(add-hook 'after-init-hook 'jake/goto-splash)
