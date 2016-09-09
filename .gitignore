@@ -2,6 +2,7 @@
 
 ### Emacs ###
 # -*- mode: gitignore; -*-
+places
 *~
 \#*\#
 /.emacs.desktop
