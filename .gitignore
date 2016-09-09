@@ -2,6 +2,7 @@
 
 ### Emacs ###
 # -*- mode: gitignore; -*-
+custom.el
 places
 *~
 \#*\#
