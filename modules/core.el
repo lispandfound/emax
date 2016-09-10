@@ -1,8 +1,4 @@
 (defconfig core
-  (require 'defaults)
-  (use-package evil
-    :ensure t
-    :config (evil-mode 1))
   (use-package ivy
     :ensure t
     :diminish (ivy-mode . "")
@@ -12,6 +8,7 @@
     :init (setq general-default-keymaps 'evil-normal-state-map
                 general-default-prefix emax-leader)
     :config (require 'keybinds))
+  (require 'evil)
   (use-package which-key
     :ensure t
     :config (which-key-mode))
