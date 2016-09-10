@@ -6,8 +6,9 @@
     :syntax-table nil
     :abbrev-table nil
     (setq buffer-read-only t
-          truncate-lines t)
-    )
+          truncate-lines t))
+  (add-hook 'emax-buffer-mode (lambda ()
+                                (jake--center-buf)))
   (defun jake--center-buf ()
       (set-window-margins (car (get-buffer-window-list (current-buffer) nil t))
                           (- (/ (window-width) 2) 28)
