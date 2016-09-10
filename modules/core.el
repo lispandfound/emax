@@ -3,6 +3,8 @@
     :ensure t
     :diminish (ivy-mode . "")
     :init (ivy-mode 1))
+  (use-package counsel
+    :ensure t)
   (use-package general
     :ensure t
     :init (setq general-default-keymaps 'evil-normal-state-map
@@ -11,10 +13,14 @@
   (require 'evil)
   (use-package which-key
     :ensure t
+    :diminish ""
     :config (which-key-mode))
   (use-package golden-ratio
     :ensure t
     :diminish (golden-ratio-mode . "")
     :config (progn
               (add-hook 'buffer-list-update-hook #'golden-ratio)
-              (golden-ratio-mode 1))))
+              (golden-ratio-mode 1)))
+  (use-package powerline
+    :ensure t)
+  ) 
