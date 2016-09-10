@@ -9,6 +9,7 @@
   (package-install 'use-package))
 (defmacro defconfig (module &rest body)
   `(when (member ',module enabled-modules)
+     (message "[%d/%d] Loading %s" (1+ (position ',module enabled-modules)) (length enabled-modules) (symbol-name ',module))
      ,@body
      (provide ',module)))
 ;; el-init
@@ -24,4 +25,6 @@
 	      :wrappers '(el-init-require/record-error
 			  el-init-require/system-case))
 (user-config)
-(add-hook 'after-init-hook 'jake/goto-splash)
+(defun display-startup-echo-area-message ()
+  (message "EMAX has started, welcome home %s!" (user-login-name)))
+(add-hook 'after-init-hook #'jake/goto-splash)
