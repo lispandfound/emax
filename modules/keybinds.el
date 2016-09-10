@@ -1,4 +1,7 @@
 (defconfig keybinds
+  (defun jake/goto-config ()
+    (interactive)
+    (find-file "~/.emax"))
   (general-evil-setup t)
   (nmap
    ":" 'execute-extended-command
@@ -14,6 +17,7 @@
    "cC" 'compile
    "ck" 'kill-compilation
    "cr" 'recompile
+   "Ed" 'jake/goto-config
    "fg" 'rgrep
    "ff" 'counsel-find-file
    "fl" 'find-file-literally
@@ -29,6 +33,7 @@
    "nf" 'narrow-to-defun
    "nw" 'widen
    "ss" 'swiper
+   "sj" 'counsel-imenu
    "/" 'counsel-pt
    "fs" 'save-buffer
    "qq" 'delete-frame
@@ -50,4 +55,5 @@
    "ww" 'other-window
    "w/" 'split-window-right
    "w=" 'balance-windows
-   "xaa" 'align))
+   "xaa" 'align)
+  )
