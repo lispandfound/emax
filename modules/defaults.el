@@ -17,8 +17,9 @@
   (setq-default save-place t)
   (show-paren-mode 1)
   (setq-default indent-tabs-mode nil)
-  (auto-revert-mode 1)
-  (diminish auto-revert-mode "")
+  (use-package auto-revert
+    :diminish (auto-revert-mode . "")
+    :config (auto-revert-mode 1))
   (setq x-select-enable-clipboard t
         x-select-enable-primary t
         save-interprogram-paste-before-kill t
