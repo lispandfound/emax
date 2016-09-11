@@ -6,12 +6,20 @@
     :syntax-table nil
     :abbrev-table nil
     (setq buffer-read-only t
+          left-fringe-width 0
+          right-fringe-width 0
           truncate-lines t))
   (add-hook 'emax-buffer-mode (lambda ()
                                 (jake--center-buf)))
+  (defun jake--get-max-line ()
+    (with-current-buffer (current-buffer)
+      (reduce (lambda (acc cur)
+                (max (if (stringp acc)
+                         (length acc)
+                       acc) (length cur))) (split-string (buffer-string) "\n" t))))
   (defun jake--center-buf ()
       (set-window-margins (car (get-buffer-window-list (current-buffer) nil t))
-                          (- (/ (window-width) 2) 28)
+                          (- (/ (window-width) 2) (truncate (/ (jake--get-max-line) 2)))
                           nil))
   (defun jake/goto-splash ()
     (interactive)
