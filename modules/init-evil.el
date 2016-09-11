@@ -37,5 +37,13 @@
   (use-package evil-lisp-state
     :ensure t
     :init (setq evil-lisp-state-global t)
-    :config (general-evil-define-key :states '(normal visual)
-              "k" evil-lisp-state-map)))
+    :config (general-define-key :states '(normal visual) :keymaps 'global
+              "k" evil-lisp-state-map))
+  (diminish 'undo-tree-mode "")
+
+  ;; Fix for dired
+  (general-evil-define-key 'normal dired-mode-map
+    "h" 'dired-up-directory
+    "j" 'dired-next-line
+    "k" 'dired-previous-line
+    "l" 'dired-find-alternate-file))
