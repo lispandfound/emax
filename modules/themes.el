@@ -14,4 +14,10 @@
       `(progn
          (set-face-attribute ,@font-alist))))
   (jake|load-font emax-default-font)
-  (set-face-attribute 'mode-line nil :height (/ (* (plist-get (cdr emax-default-font) :height) emax-mode-line-scale) 100)))
+  (setq powerline-height (truncate (* emax-mode-line-scale (frame-char-height))))
+  (when emax-use-airline
+    (use-package airline-themes
+      :ensure t
+      :config (load-theme emax-airline-theme)
+      ))
+  )
