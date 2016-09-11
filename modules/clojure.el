@@ -9,6 +9,10 @@
             cider-prompt-save-file-on-load nil
             cider-repl-use-clojure-font-lock t)
       (add-hook 'clojure-mode-hook 'cider-mode)
+      (when (jake/module-is-enabled 'completion)
+        (require 'completion)
+        (add-hook 'cider-repl-mode-hook #'company-mode)
+        (add-hook 'cider-mode-hook #'company-mode))
       (general-evil-define-key 'normal cider-stacktrace-mode-map
         "C-j" 'cider-stacktrace-next-cause
         "C-k" 'cider-stacktrace-previous-cause
@@ -76,4 +80,5 @@
         ;; Schema
         (s/defrecord 2)
         ;; test.check
-        (for-all 'defun))))
+        (for-all 'defun)))
+  )

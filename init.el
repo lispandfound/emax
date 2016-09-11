@@ -9,6 +9,7 @@
   (package-install 'use-package))
 (defmacro defconfig (module &rest body)
   `(when (member ',module enabled-modules)
+     (unless (equal ',module 'module-funcs) (require 'module-funcs))
      (message "[%d/%d] Loading %s" (1+ (position ',module enabled-modules)) (length enabled-modules) (symbol-name ',module))
      ,@body
      (provide ',module)))

@@ -1,4 +1,5 @@
 (defconfig common-lisp
+  (require 'module-funcs)
   (use-package slime
     :commands slime-mode
     :diminish (slime-mode . "λsl")
@@ -8,10 +9,11 @@
              inferior-lisp-program "sbcl" ;; Should change if another lisp is used
              slime-complete-symbol*-fancy t
              slime-complete-symbol-function 'slime-fuzzy-complete-symbol
-             slime-contrib '(slime-fancy slime-indentation slime-sbcl-exts slime-scratch))
+             slime-contribs '(slime-fancy slime-indentation slime-sbcl-exts slime-scratch))
             (add-hook 'lisp-mode-hook #'slime-mode))
     :config (progn
               (slime-setup)
+              (define-key slime-mode-map [(tab)] 'slime-fuzzy-complete-symbol)
               (general-evil-define-key '(normal visual) lisp-mode-map
                 :prefix ","
                 "cc" 'slime-compile-file
@@ -54,4 +56,13 @@
                 "si" 'slime
                 "sq" 'slime-quit-lisp
 
-                "tf" 'slime-toggle-fancy-trace)))) 
+                "tf" 'slime-toggle-fancy-trace)))
+  (when (jake/module-is-enabled 'completion)
+    (require 'completion)
+    (use-package slime-company
+      :defer t
+      :ensure t
+      :init (add-to-list 'slime-contribs 'slime-company)))
+  (use-package eldoc
+    :defer t
+    :diminish (eldoc-mode . "λel") )) 
