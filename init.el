@@ -19,7 +19,7 @@
 (setq custom-file "~/.emacs.d/custom.el")
 (load-file "~/.emax")
 (user-init)
-(mapcar (lambda (module) (add-to-list 'enabled-modules module)) '(defaults core keybinds themes splash init-evil))
+(mapcar (lambda (module) (add-to-list 'enabled-modules module)) '(module-funcs defaults core keybinds themes splash init-evil))
 (el-init-load "~/.emacs.d/modules"
 	      :subdirectories '(".")
 	      :wrappers '(el-init-require/record-error
