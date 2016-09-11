@@ -19,34 +19,80 @@
     :ensure t
     :diminish (golden-ratio-mode . "")
     :config (progn
-              (defvar golden-ratio-selected-window
-                (frame-selected-window)
-                "Selected window.")
+              (setq golden-ratio-exclude-modes '("bs-mode"
+                                                 "calc-mode"
+                                                 "ediff-mode"
+                                                 "dired-mode"
+                                                 "gud-mode"
+                                                 "gdb-locals-mode"
+                                                 "gdb-registers-mode"
+                                                 "gdb-breakpoints-mode"
+                                                 "gdb-threads-mode"
+                                                 "gdb-frames-mode"
+                                                 "gdb-inferior-io-mode"
+                                                 "gud-mode"
+                                                 "gdb-inferior-io-mode"
+                                                 "gdb-disassembly-mode"
+                                                 "gdb-memory-mode"
+                                                 "restclient-mode"
+                                                 "speedbar-mode"
+                                                 ))
+              (setq golden-ratio-extra-commands
+                    (append golden-ratio-extra-commands
+                            '(ace-window
+                              ace-delete-window
+                              ace-select-window
+                              ace-swap-window
+                              ace-maximize-window
+                              avy-pop-mark
+                              evil-avy-goto-word-or-subword-1
+                              evil-avy-goto-line
+                              windmove-left
+                              windmove-right
+                              windmove-up
+                              windmove-down
+                              evil-window-delete
+                              evil-window-split
+                              evil-window-vsplit
+                              evil-window-left
+                              evil-window-right
+                              evil-window-up
+                              evil-window-down
+                              evil-window-bottom-right
+                              evil-window-top-left
+                              evil-window-mru
+                              evil-window-next
+                              evil-window-prev
+                              evil-window-new
+                              evil-window-vnew
+                              evil-window-rotate-upwards
+                              evil-window-rotate-downwards
+                              evil-window-move-very-top
+                              evil-window-move-far-left
+                              evil-window-move-far-right
+                              evil-window-move-very-bottom
+                              select-window-0
+                              select-window-1
+                              select-window-2
+                              select-window-3
+                              select-window-4
+                              select-window-5
+                              select-window-6
+                              select-window-7
+                              select-window-8
+                              select-window-9
+                              buf-move-left
+                              buf-move-right
+                              buf-move-up
+                              buf-move-down
+                              ess-eval-buffer-and-go
+                              ess-eval-function-and-go
+                              ess-eval-line-and-go))
 
-              (defun golden-ratio-set-selected-window
-                  (&optional window)
-                "Set selected window to WINDOW."
-                (setq-default
-                 golden-ratio-selected-window (or window (frame-selected-window))))
+                    )
 
-              (defun golden-ratio-selected-window-p
-                  (&optional window)
-                "Return t if WINDOW is selected window."
-                (eq (or window (selected-window))
-                    (default-value 'golden-ratio-selected-window)))
-
-              (defun golden-ratio-maybe
-                  (&optional arg)
-                "Run `golden-ratio' if `golden-ratio-selected-window-p' returns nil."
-                (interactive "p")
-                (unless (golden-ratio-selected-window-p)
-                  (golden-ratio-set-selected-window)
-                  (golden-ratio arg)))
-
-              (add-hook 'buffer-list-update-hook #'golden-ratio-maybe)
-              (add-hook 'focus-in-hook           #'golden-ratio)
-              (add-hook 'focus-out-hook          #'golden-ratio)
-              (golden-ratio-mode 1)))
+                    (golden-ratio-mode 1)
+              ))
   (use-package powerline
     :ensure t)
   ) 
