@@ -9,6 +9,7 @@
     :ensure t)
   (use-package smartparens
     :ensure t
+    :diminish (smartparens-mode . "")
     :commands smartparens-mode
     :init (add-hook 'prog-mode-hook #'smartparens-mode)
     :config (require 'smartparens-config))

@@ -104,9 +104,14 @@
                                   "j" 'org-agenda-next-line
                                   "k" 'org-agenda-previous-line))
               
-              (add-hook 'org-mode-hook 'org-indent-mode)))
-   (use-package evil-org
-     :commands evil-org-mode
+              ))
+  (use-package org-indent
+    :commands org-indent-mode
+    :diminish (org-indent-mode . "")
+    :init (add-hook 'org-mode-hook 'org-indent-mode))
+  (use-package evil-org
+    :commands evil-org-mode
+    :diminish (evil-org-mode . "")
      :ensure t
      :init
      (add-hook 'org-mode-hook 'evil-org-mode))
