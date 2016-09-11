@@ -26,7 +26,8 @@
         "gP" 'magit-push-popup
         "gs" 'magit-status
         "gS" 'magit-stage-file
-        "gU" 'magit-unstage-file))
+        "gU" 'magit-unstage-file)
+     :config (diminish 'magit-auto-revert-mode))
   (with-eval-after-load 'magit
     (use-package evil-magit
       :ensure t)))

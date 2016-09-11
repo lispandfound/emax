@@ -18,7 +18,7 @@
   (show-paren-mode 1)
   (setq-default indent-tabs-mode nil)
   (use-package auto-revert
-    :diminish (auto-revert-mode . "")
+    :init (add-hook 'auto-revert-mode-hook (lambda () (diminish 'auto-revert-mode)))
     :config (auto-revert-mode 1))
   (setq x-select-enable-clipboard t
         x-select-enable-primary t
