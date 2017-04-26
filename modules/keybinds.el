@@ -3,7 +3,7 @@
     (interactive)
     (find-file "~/.emax"))
   (general-evil-setup t)
-  (nmap
+  (general-define-key :prefix emax-leader
    ":" 'execute-extended-command
    "ac" 'calculator-dispatch
    "ad" 'dired
