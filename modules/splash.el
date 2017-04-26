@@ -1,31 +1,16 @@
 (defconfig splash
-  (setq inhibit-splash-screen t)
-  (defconst splash-mode-buffer-name "*emax*")
-  (define-derived-mode emax-buffer-mode fundamental-mode "Splash"
-    :group 'splash
-    :syntax-table nil
-    :abbrev-table nil
-    (setq buffer-read-only t
-          left-fringe-width 0
-          right-fringe-width 0
-          truncate-lines t))
-  (add-hook 'emax-buffer-mode (lambda ()
-                                (jake--center-buf)))
-  (defun jake--get-max-line ()
-    (with-current-buffer (current-buffer)
-      (reduce (lambda (acc cur)
-                (max (if (stringp acc)
-                         (length acc)
-                       acc) (length cur))) (split-string (buffer-string) "\n" t))))
-  (defun jake--center-buf ()
-      (set-window-margins (car (get-buffer-window-list (current-buffer) nil t))
-                          (- (/ (window-width) 2) (truncate (/ (jake--get-max-line) 2)))
-                          nil))
-  (defun jake/goto-splash ()
-    (interactive)
-    (unless (buffer-live-p splash-mode-buffer-name)
-      (with-current-buffer (get-buffer-create splash-mode-buffer-name)
-        (insert-file-contents "~/.emacs.d/boot.txt")
-        (emax-buffer-mode)))
-    (switch-to-buffer splash-mode-buffer-name)
-    (jake--center-buf)))
+  (defun get-string-from-file (file)
+    (with-temp-buffer
+      (insert-file-contents file)
+      (buffer-substring-no-properties (point-min) (point-max))))
+(use-package pretty-splashscreen-mode
+    :load-path "local/pretty-splashscreen-mode"
+    :commands pspl/goto-splash
+    :init (progn
+            (setq
+             ;; Set the splashscreen buffer name
+             pretty-splashscreen-buffer-name "*emax*"
+             ;; Set the contents of the splashscreen
+             pretty-splashscreen-buffer-contents (get-string-from-file "~/.emacs.d/boot.txt"))
+            ;; Add a startup hook to swap to the splashscreen. `get-string-from-file' is an external, unrelated function
+            (setq initial-buffer-choice #'pspl/goto-splash))))
