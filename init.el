@@ -8,11 +8,12 @@
   (package-refresh-contents)
   (package-install 'use-package))
 (defmacro defconfig (module &rest body)
-  `(when (member ',module enabled-modules)
-     (unless (equal ',module 'module-funcs) (require 'module-funcs))
-     (message "[%d/%d] Loading %s" (1+ (position ',module enabled-modules)) (length enabled-modules) (symbol-name ',module))
-     ,@body
-     (provide ',module)))
+  `(progn (when (member ',module enabled-modules)
+            (unless (equal ',module 'module-funcs) (require 'module-funcs))
+            (message "[%d/%d] Loading %s" (1+ (position ',module enabled-modules)) (length enabled-modules) (symbol-name ',module))
+            ,@body
+            )
+          (provide ',module)))
 ;; el-init
 (use-package el-init
   :ensure t)
@@ -28,4 +29,3 @@
 (user-config)
 (defun display-startup-echo-area-message ()
   (message "EMAX has started, welcome home %s!" (user-login-name)))
-(add-hook 'after-init-hook #'jake/goto-splash)
