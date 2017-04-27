@@ -47,3 +47,5 @@ flycheck_*.el
 .projectile
 
 /bookmarks
+# Anaconda mode directory
+/anaconda-mode/
