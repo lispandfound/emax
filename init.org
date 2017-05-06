@@ -1,0 +1,1375 @@
+#+TITLE: Emacs Configuration
+#+AUTHOR: Jake Faulkner
+* Setup
+** Menu and scroll bar
+This should be in the appearance section of the org file, however
+doing that causes an unsightly flashing as they are first visible and
+then not visible. I'll disable them here instead of that.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+#+END_SRC
+** Packages
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (require 'package)
+  (setq package-archives
+        '(("gnu" . "https://elpa.gnu.org/packages/")
+          ("melpa" . "https://melpa.org/packages/")
+          ("org" . "http://orgmode.org/elpa/")))
+  (package-initialize)
+#+END_SRC
+
+[[https://github.com/quelpa/quelpa][Quelpa]] is a decentralized package management solution for emacs. I use
+it because I'm not good enough for my own packages to be on melpa.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (if (require 'quelpa nil t)
+      (quelpa-self-upgrade)
+    (with-temp-buffer
+      (url-insert-file-contents "https://raw.github.com/quelpa/quelpa/master/bootstrap.el")
+      (eval-buffer)))
+#+END_SRC
+
+I also employ [[https://github.com/jwiegley/use-package][use-package]], which is the sane package configuration
+macro. I use a quelpa skew that allows me to get all the modular
+goodness of use-package in tandem with the decentralized freedom of quelpa.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (quelpa
+   '(quelpa-use-package
+     :fetcher github
+     :repo "quelpa/quelpa-use-package"))
+  (require 'quelpa-use-package)
+#+END_SRC
+** Custom
+Custom.el shouldn't junk up this file
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq custom-file "~/.emacs.d/custom.el")
+#+END_SRC
+* Core
+A few packages are so essential to the main config that they deserve a
+top level heading. Core editor functionality, keybindings, etc, are
+included here.
+
+** Evil
+I am /among the stars aboard the Evil flagship/ to quote the [[https://github.com/syl20bnr/spacemacs][spacemacs]]
+setup process. Vim keybindings are the *only* part of vim I want in my
+configuration.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package evil
+    :quelpa t
+    :config (evil-mode 1))
+#+END_SRC
+** General
+[[https://github.com/noctuid/general.el][General]] is the most generic name for a suitably general package. It
+provides a high level keybinding interface to ease the relative pain
+of binding keys in Evil.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package general
+    :quelpa t
+    :init (setq general-default-keymaps 'evil-normal-state-map
+                general-default-prefix "SPC")
+    :config (general-evil-setup t))
+#+END_SRC
+** Macros
+~package-enabled-p~ is a function that returns true if the passed
+package =PKG= is not a member of the list ~disabled-packages~.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defvar enabled-packages '())
+
+  (defun package-enabled-p (pkg)
+    (not (memq pkg enabled-packages)))
+#+END_SRC
+
+The ~package!~ macro wraps ~use-package~ with feature toggles that allow
+easy enabling and disabling of packages. It also automatically adds
+=:quelpa t= unless another =:quelpa= binding is specified.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defmacro package! (pkg &rest forms)
+    (let ((forms (if (memq :quelpa forms)
+                     forms
+                   (append '(:quelpa t) forms))))
+      `(when (package-enabled-p ',pkg)
+         (use-package ,pkg
+           ,@forms))))
+#+END_SRC
+
+=which-key= provides functionality to discover keybindings.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! which-key
+    :diminish ""
+    :config (which-key-mode))
+#+END_SRC
+
+I also like to have prefixes declared, to provide documentation of the bindings.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defun declare-prefix (prefix name &optional mode)
+    (let ((key-sequence (format "%s %s"
+                                (if mode
+                                    ","
+                                  "SPC")
+                                name)))
+      (if mode
+        (which-key-add-major-mode-key-based-replacements key-sequence prefix name)
+        (which-key-add-key-based-replacements key-sequence prefix name))))
+#+END_SRC
+** Company
+Too many packages rely on this to not have it in core.
+#+BEGIN_SRC emacs-lisp
+  (package! company
+	    :commands '(global-company-mode)
+	    :init (add-hook 'after-init-hook 'global-company-mode))
+#+END_SRC
+** Keybinds
+
+Basic keybindings to help the average evil/vim user feel at home
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defun jake/goto-config ()
+    (interactive)
+    (find-file "~/.emax"))
+  (general-define-key :keymaps 'global :states '(normal visual emacs)
+                      ":" 'execute-extended-command
+                      "ac" 'calculator-dispatch
+                      "ad" 'dired
+                      "ap" 'list-processes
+                      "aP" 'proced
+                      "au" 'undo-tree-visualize
+                      "bd" 'kill-this-buffer
+                      "bk" 'kill-buffer
+                      "bw" 'read-only-mode
+                      "bb" 'ivy-switch-buffer
+                      "cC" 'compile
+                      "ck" 'kill-compilation
+                      "cr" 'recompile
+                      "Ed" 'jake/goto-config
+                      "fg" 'rgrep
+                      "ff" 'counsel-find-file
+                      "fl" 'find-file-literally
+                      "fL" 'counsel-locate
+                      "fr" 'counsel-recentf
+                      "fS" 'evil-write-all
+                      "fvd" 'add-dir-local-variable
+                      "fvf" 'add-file-local-variable
+                      "fvp" 'add-file-local-variable-prop-line
+                      "im" 'counsel-woman
+                      "nr" 'narrow-to-region
+                      "np" 'narrow-to-page
+                      "nf" 'narrow-to-defun
+                      "nw" 'widen
+                      "ss" 'swiper
+                      "sj" 'counsel-imenu
+                      "/" 'counsel-pt
+                      "fs" 'save-buffer
+                      "qq" 'delete-frame
+                      "qz" 'evil-save-and-quit
+                      "w2"  'split-window-vertically
+                      "w3" 'split-window-horizontally
+                      "wc" 'delete-window
+                      "wH" 'evil-window-move-far-left
+                      "wh" 'evil-window-left
+                      "wJ" 'evil-window-move-very-bottom
+                      "wj" 'evil-window-down
+                      "wK" 'evil-window-move-very-top
+                      "wk" 'evil-window-up
+                      "wL" 'evil-window-move-far-right
+                      "wl" 'evil-window-right
+                      "wm" 'delete-other-windows
+                      "wo" 'other-frame
+                      "w-" 'split-window-below
+                      "ww" 'other-window
+                      "w/" 'split-window-right
+                      "w=" 'balance-windows
+                      "xaa" 'align)
+  (setq evil-want-Y-yank-to-eol t)
+  (general-define-key :keymaps 'global :prefix ""
+                      "J" 'join-line
+                      ;; Other bindings will end up here in time
+                      )
+#+END_SRC
+* Modules
+I like the idea of splitting configuration into modules very
+much. Spacemacs has at least shown me a way to do this with
+directories, but the same principle can apply to
+directories. Ultimately I would like to use tags to toggle modules on
+and off.
+** Interface
+
+*** Usability
+**** ivy
+Ivy is my preferred completion system of choice, (but helm is a close
+second).
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! ivy
+    :diminish (ivy-mode . "")
+    :init (ivy-mode 1))
+#+END_SRC
+
+Counsel greatly expands the capabilities of ivy, to allow completion
+anywhere.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! counsel
+            :after ivy
+	    :diminish (counsel-mode . "")
+            :config (counsel-mode))
+#+END_SRC
+*** Appearance <<appearance>>
+**** Golden Ratio
+I hold this in the appearance category even though it could also be
+consider /functional/ in some respects. It forces window splits to
+adhere to the golden ratio. For instance in a two window split the left
+window is 1/\phi (0.618...) of the frame. This could be considered
+functional as it can greatly reduce the clutter that a 50:50 split
+sometimes generates.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! golden-ratio
+    :diminish (golden-ratio-mode . "")
+    :config (progn
+              (setq golden-ratio-exclude-modes '("bs-mode"
+                                                 "calc-mode"
+                                                 "ediff-mode"
+                                                 "dired-mode"
+                                                 "gud-mode"
+                                                 "gdb-locals-mode"
+                                                 "gdb-registers-mode"
+                                                 "gdb-breakpoints-mode"
+                                                 "gdb-threads-mode"
+                                                 "gdb-frames-mode"
+                                                 "gdb-inferior-io-mode"
+                                                 "gud-mode"
+                                                 "gdb-inferior-io-mode"
+                                                 "gdb-disassembly-mode"
+                                                 "gdb-memory-mode"
+                                                 "restclient-mode"
+                                                 "speedbar-mode"
+                                                 ))
+              (setq golden-ratio-extra-commands
+                    (append golden-ratio-extra-commands
+                            '(ace-window
+                              ace-delete-window
+                              ace-select-window
+                              ace-swap-window
+                              ace-maximize-window
+                              avy-pop-mark
+                              evil-avy-goto-word-or-subword-1
+                              evil-avy-goto-line
+                              windmove-left
+                              windmove-right
+                              windmove-up
+                              windmove-down
+                              evil-window-delete
+                              evil-window-split
+                              evil-window-vsplit
+                              evil-window-left
+                              evil-window-right
+                              evil-window-up
+                              evil-window-down
+                              evil-window-bottom-right
+                              evil-window-top-left
+                              evil-window-mru
+                              evil-window-next
+                              evil-window-prev
+                              evil-window-new
+                              evil-window-vnew
+                              evil-window-rotate-upwards
+                              evil-window-rotate-downwards
+                              evil-window-move-very-top
+                              evil-window-move-far-left
+                              evil-window-move-far-right
+                              evil-window-move-very-bottom
+                              select-window-0
+                              select-window-1
+                              select-window-2
+                              select-window-3
+                              select-window-4
+                              select-window-5
+                              select-window-6
+                              select-window-7
+                              select-window-8
+                              select-window-9
+                              buf-move-left
+                              buf-move-right
+                              buf-move-up
+                              buf-move-down
+                              ess-eval-buffer-and-go
+                              ess-eval-function-and-go
+                              ess-eval-line-and-go))
+
+                    )
+
+              (golden-ratio-mode 1)
+              ))
+#+END_SRC
+
+A lot of commands are added to the variable
+=golden-ratio-extra-commands=. After any of those commands are called,
+golden-ratio recalculates the splits.
+**** Theme
+Base16 is love, base16 is life.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! base16-theme
+	 :config (load-theme 'base16-ocean t))
+#+END_SRC
+**** Powerline
+Not gonna lie, this one is mostly superficial.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! powerline
+            ;; 1.5 tends to be the only height airline renders well at.
+            :init (setq powerline-height (truncate (* 1.5 (frame-char-height)))))
+#+END_SRC
+
+This one is especially superficial but damn good looking. The
+monkeying around with daemon specific settings is from the fix for
+issue [[https://github.com/AnthonyDiGirolamo/airline-themes/issues/25][#25]] on the github for airline-themes.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! airline-themes
+	:config (if (daemonp)
+                    (add-hook 'after-make-frame-functions
+                              (lambda (frame)
+				(select-frame frame)
+				(load-theme 'airline-solarized-alternate-gui t)))
+                  (load-theme 'airline-base16-gui-dark t)))
+#+END_SRC
+**** Splashscreen
+My own package! No functionality, all glamour. Adds a centered
+splashscreen replacement for the default splashscreen.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defun get-string-from-file (file)
+      (with-temp-buffer
+	(insert-file-contents file)
+	(buffer-substring-no-properties (point-min) (point-max))))
+  (package! cl-lib)
+  (package! pretty-splashscreen-mode
+      :quelpa (pretty-splashscreen-mode :repo "Triagle/pretty-splashscreen-mode" :fetcher github)
+      :config (progn
+              (setq
+               ;; Set the splashscreen buffer name
+               pretty-splashscreen-buffer-name "*emax*"
+               ;; Set the contents of the splashscreen
+               pretty-splashscreen-center-text t
+               pretty-splashscreen-buffer-contents (get-string-from-file "~/.emacs.d/boot.txt"))
+              ;; Add a startup hook to swap to the splashscreen. `get-string-from-file' is an external, unrelated function
+              (setq initial-buffer-choice #'pspl/goto-splash)))
+#+END_SRC
+** Languages
+*** Lisps
+I like my lisps.
+**** Clojure
+Less useful right now, but every now and then some project grabs me
+and clojure becomes the goto choice.
+
+Standard clojure mode.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! clojure-mode
+    :mode ("\\.clj$" . clojure-mode)
+    :config
+    (define-clojure-indent
+      ;; Compojure
+      (ANY 2)
+      (DELETE 2)
+      (GET 2)
+      (HEAD 2)
+      (POST 2)
+      (PUT 2)
+      (context 2)
+      (defroutes 'defun)
+      ;; Cucumber
+      (After 1)
+      (Before 1)
+      (Given 2)
+      (Then 2)
+      (When 2)
+      ;; Schema
+      (s/defrecord 2)
+      ;; test.check
+      (for-all 'defun)))
+#+END_SRC
+
+Cider might as well be included in the deal. Second best repl
+environment on earth (first being slime 🙌).
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! cider
+    :general
+    ( :prefix "," :keymaps 'clojure-mode-map :states '(normal)
+             "hh" 'cider-doc
+             "hg" 'cider-grimoire
+             "hj" 'cider-javadoc
+             "eb" 'cider-eval-buffer
+             "ee" 'cider-eval-last-sexp
+             "ef" 'cider-eval-defun-at-point
+             "er" 'cider-eval-region
+             "ew" 'cider-eval-last-sexp-and-replace
+             "fb" 'cider-format-buffer
+             "gb" 'cider-pop-back
+             "ge" 'cider-jump-to-compilation-error
+             "gg" 'cider-find-var
+             "gr" 'cider-jump-to-resource
+             "sb" 'cider-load-buffer
+             "sc" 'cider-connect
+             "si" 'cider-jack-in
+             "sI" 'cider-jack-in-clojurescript
+             "sq" 'cider-quit
+             "ss" 'cider-switch-to-repl-buffer
+             "sx" 'cider-refresh
+             "di" 'cider-inspect)
+    (general-evil-define-key 'normal cider-stacktrace-mode-map
+             "C-j" 'cider-stacktrace-next-cause
+             "C-k" 'cider-stacktrace-previous-cause
+             "TAB" 'cider-stacktrace-cycle-current-cause
+             "0"   'cider-stacktrace-cycle-all-causes
+             "1"   'cider-stacktrace-cycle-cause-1
+             "2"   'cider-stacktrace-cycle-cause-2
+             "3"   'cider-stacktrace-cycle-cause-3
+             "4"   'cider-stacktrace-cycle-cause-4
+             "5"   'cider-stacktrace-cycle-cause-5
+             "a"   'cider-stacktrace-toggle-all
+             "c"   'cider-stacktrace-toggle-clj
+             "d"   'cider-stacktrace-toggle-duplicates
+             "J"   'cider-stacktrace-toggle-java
+             "r"   'cider-stacktrace-toggle-repl
+             "T" 'cider-stacktrace-toggle-tooling)
+    :init
+    (progn
+      (setq cider-stacktrace-default-filters '(tooling dup)
+            cider-repl-pop-to-buffer-on-connect nil
+            cider-prompt-save-file-on-load nil
+            cider-repl-use-clojure-font-lock t)
+      (add-hook 'clojure-mode-hook 'cider-mode)
+      (add-hook 'cider-repl-mode-hook #'company-mode)
+      (add-hook 'cider-mode-hook #'company-mode)))
+#+END_SRC
+**** Common Lisp
+Common Lisp is my first lisp, is lisp senpai.
+
+I wish all repls were of the same quality of slime
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! slime
+	    :commands slime-mode
+	    :diminish (slime-mode . "λsl")
+	    :general (:prefix "," :keymaps 'lisp-mode-map
+			      "cc" 'slime-compile-file
+			      "cC" 'slime-compile-and-load-file
+			      "cl" 'slime-load-file
+			      "cf" 'slime-compile-defun
+			      "cr" 'slime-compile-region
+			      "cn" 'slime-remove-notes
+
+			      "eb" 'slime-eval-buffer
+			      "ef" 'slime-eval-defun
+			      "eF" 'slime-undefine-function
+			      "ee" 'slime-eval-last-sexp
+			      "er" 'slime-eval-region
+
+			      "gg" 'slime-inspect-definition
+			      "gb" 'slime-pop-find-definition-stack
+			      "gn" 'slime-next-note
+			      "gN" 'slime-previous-note
+
+			      "ha" 'slime-apropos
+			      "hA" 'slime-apropos-all
+			      "hd" 'slime-disassemble-symbol
+			      "hh" 'slime-describe-symbol
+			      "hH" 'slime-hyperspec-lookup
+			      "hp" 'slime-apropos-package
+			      "ht" 'slime-toggle-trace-fdefinition
+			      "hT" 'slime-untrace-all
+			      "h<" 'slime-who-calls
+			      "h>" 'slime-calls-who
+
+			      "hr" 'slime-who-references
+			      "hm" 'slime-who-macroexpands
+			      "hs" 'slime-who-specializes
+
+			      "ma" 'slime-macroexpand-all
+			      "mo" 'slime-macroexpand-1
+
+			      "se" 'slime-eval-last-expression-in-repl
+			      "si" 'slime
+			      "sq" 'slime-quit-lisp
+
+			      "tf" 'slime-toggle-fancy-trace)
+	    :init (progn
+		    (setq
+		     inferior-lisp-program "sbcl" ;; Should change if another lisp is used
+		     slime-complete-symbol*-fancy t
+		     slime-complete-symbol-function 'slime-fuzzy-complete-symbol
+		     slime-contribs '(slime-fancy slime-indentation slime-sbcl-exts slime-scratch))
+		    (add-hook 'lisp-mode-hook #'slime-mode))
+	    :config (progn
+		      (slime-setup)
+		      (define-key slime-mode-map [(tab)] 'slime-fuzzy-complete-symbol)))
+#+END_SRC
+
+Company completion for that too plz.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! slime-company
+        :after company
+        :init (add-to-list 'slime-contribs 'slime-company))
+#+END_SRC
+
+Eldoc!
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! eldoc
+      :defer t
+      :diminish (eldoc-mode . "λel") )
+#+END_SRC
+**** Scheme
+I've always been described as a schemer... (mmm scheme puns).
+
+Uses the significantly less awesome geiser as it's repl. I say less
+awesome because it frequently freezes whilst running chicken scheme
+sessions for any length of time.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! geiser
+      :general (:keymaps 'scheme-mode-map :prefix "," :states '(normal)
+                         "si" 'run-geiser
+                         "'"  'geiser-mode-switch-to-repl
+                         ","  'lisp-state-toggle-lisp-state
+
+                         "cc" 'geiser-compile-current-buffer
+                         "cp" 'geiser-add-to-load-path
+
+                         "eb" 'geiser-eval-buffer
+                         "ee" 'geiser-eval-last-sexp
+                         "ef" 'geiser-eval-definition
+                         "el" 'lisp-state-eval-sexp-end-of-line
+                         "er" 'geiser-eval-region
+
+                         "gb" 'geiser-pop-symbol-stack
+                         "gm" 'geiser-edit-module
+                         "gn" 'next-error
+                         "gN" 'previous-error
+
+                         "hh" 'geiser-doc-symbol-at-point
+                         "hd" 'geiser-doc-look-up-manual
+                         "hm" 'geiser-doc-module
+                         "h<" 'geiser-xref-callers
+                         "h>" 'geiser-xref-callees
+
+                         "il" 'geiser-insert-lambda
+
+                         "me" 'geiser-expand-last-sexp
+                         "mf" 'geiser-expand-definition
+                         "mx" 'geiser-expand-region
+
+                         "si" 'geiser-mode-switch-to-repl
+                         "sb" 'geiser-eval-buffer
+                         "sB" 'geiser-eval-buffer-and-go
+                         "sf" 'geiser-eval-definition
+                         "sF" 'geiser-eval-definition-and-go
+                         "se" 'geiser-eval-last-sexp
+                         "sr" 'geiser-eval-region
+                         "sR" 'geiser-eval-region-and-go
+                         "ss" 'geiser-set-scheme))
+#+END_SRC
+*** Python
+Don't really use python too often on my own, but it's handy to have
+around to bash out simple scripts (I normally use scheme for that
+though). Also uni uses it, so I don't really gave a choice.
+
+The standard python mode config is ripped straight from spacemacs
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! python
+    :defer t
+    :init
+    (progn
+      (defun inferior-python-setup-hook ()
+        (setq indent-tabs-mode t))
+
+      (add-hook 'inferior-python-mode-hook #'inferior-python-setup-hook)
+      (general-evil-define-key '(normal visual) python-mode-map :prefix ","
+                               "sB" 'python-shell-send-buffer-switch
+                               "sb" 'python-shell-send-buffer
+                               "sF" 'python-shell-send-defun-switch
+                               "sf" 'python-shell-send-defun
+                               "si" 'python-start-or-switch-repl
+                               "sR" 'python-shell-send-region-switch
+                               "sr" 'python-shell-send-region))
+    :config
+    (progn
+      ;; add support for `ahs-range-beginning-of-defun' for python-mode
+      (with-eval-after-load 'auto-highlight-symbol
+        (add-to-list 'ahs-plugin-bod-modes 'python-mode))
+
+      (defun python-shell-send-buffer-switch ()
+        "Send buffer content to shell and switch to it in insert mode."
+        (interactive)
+        (python-shell-send-buffer)
+        (python-shell-switch-to-shell)
+        (evil-insert-state))
+
+      (defun python-shell-send-defun-switch ()
+        "Send function content to shell and switch to it in insert mode."
+        (interactive)
+        (python-shell-send-defun nil)
+        (python-shell-switch-to-shell)
+        (evil-insert-state))
+
+      (defun python-shell-send-region-switch (start end)
+        "Send region content to shell and switch to it in insert mode."
+        (interactive "r")
+        (python-shell-send-region start end)
+        (python-shell-switch-to-shell)
+        (evil-insert-state))
+
+      (defun python-start-or-switch-repl ()
+        "Start and/or switch to the REPL."
+        (interactive)
+        (let ((shell-process
+               (or (python-shell-get-process)
+                   ;; `run-python' has different return values and different
+                   ;; errors in different emacs versions. In 24.4, it throws an
+                   ;; error when the process didn't start, but in 25.1 it
+                   ;; doesn't throw an error, so we demote errors here and
+                   ;; check the process later
+                   (with-demoted-errors "Error: %S"
+                     ;; in Emacs 24.5 and 24.4, `run-python' doesn't return the
+                     ;; shell process
+                     (call-interactively #'run-python)
+                     (python-shell-get-process)))))
+          (unless shell-process
+            (error "Failed to start python shell properly"))
+          (pop-to-buffer (process-buffer shell-process))
+          (evil-insert-state)))))
+#+END_SRC
+
+Anaconda mode for the docs and such.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! anaconda-mode
+            :defer t
+            :after python
+            :init
+            (add-hook 'python-mode-hook 'anaconda-mode)
+            :config
+            (progn
+
+              (general-evil-define-key  '(normal visual) python-mode-map
+                :prefix ","
+                "hh" 'anaconda-mode-show-doc
+                "ga" 'anaconda-mode-find-assignments
+                "gb" 'anaconda-mode-go-back
+                "gu" 'anaconda-mode-find-references)
+
+              (diminish 'anaconda-mode "")))
+#+END_SRC
+
+Company complete for that as well.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! company-anaconda
+            :after company
+            :config (add-to-list 'company-backends '(company-anaconda)))
+#+END_SRC
+
+*** OCaml
+OCaml is a newcomer to my language swiss army knife, which changes
+very often (I mean at one point I wrote Java code).
+
+Tuareg fixes innumerable problems with the default OCaml mode.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! tuareg
+      :mode ("\\.ml(i|y)?$" . taureg-mode)
+      :init   (add-hook 'tuareg-mode-hook
+                        (lambda ()
+                          (when (functionp 'prettify-symbols-mode)
+                            (prettify-symbols-mode)))))
+#+END_SRC
+
+Merlin is for the autocomplete. These OCaml names are brilliant.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! merlin
+      :diminish (merlin-mode . "λm")
+      :commands (merlin-mode)
+      :init (progn
+              (add-hook 'tuareg-mode-hook #'merlin-mode)
+              (add-hook 'caml-mode-hook #'merlin-mode)))
+#+END_SRC
+
+OCaml syntax is a hairy yeti of a problem (ironic for a language that
+enjoys excellent parsing tools), let's have ocp-indent deal
+with that one.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! ocp-indent
+      :defer t
+      :init
+      (progn
+        (add-hook 'tuareg-mode-hook 'ocp-indent-caml-mode-setup)
+        (general-evil-define-key '(normal visual) tuareg-mode-map
+              "=" 'ocp-indent-buffer)))
+#+END_SRC
+
+Utop is on top of the OCaml repl game.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! utop
+      :diminish (utop-minor-mode . "")
+      :after tuareg
+      :general
+      (:keymaps 'utop-mode-map :states '(normal insert)
+                        "C-<up>" 'utop-history-goto-prev
+                        "C-<down>" 'utop-history-goto-next)
+      (general-define-key :keymaps 'tuareg-mode-map :prefix "," :states '(normal visual)
+               "si" 'utop
+               "sr" 'utop-eval-region)
+      :init
+      (add-hook 'tuareg-mode-hook 'utop-minor-mode)
+      :config
+      (setq utop-command "opam config exec -- utop -emacs"))
+#+END_SRC
+*** TODO Rust
+Please write my configuration :(
+** Org Mode
+Needs it's own special header. Would use emacs even if it only poorly
+implemented half of org mode.
+
+Gotta get the org mode contrib package too, to really live the org
+mode lifestyle.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! org
+      :quelpa org-plus-contrib
+      :init (progn
+              (setq org-log-done t
+                    org-startup-with-inline-images t
+                    org-src-fontify-natively t)
+              (general-evil-define-key '(normal visual) org-mode-map
+		:prefix ","
+		"'" 'org-edit-special
+		"c" 'org-capture
+		"d" 'org-deadline
+		"D" 'org-insert-drawer
+		"e" 'org-export-dispatch
+		"f" 'org-set-effort
+		"P" 'org-set-property
+		":" 'org-set-tags
+
+		"a" 'org-agenda
+		"b" 'org-tree-to-indirect-buffer
+		"A" 'org-archive-subtree
+		"l" 'org-open-at-point
+		"T" 'org-show-todo-tree
+
+		"." 'org-time-stamp
+		"!" 'org-time-stamp-inactive
+
+		;; headings
+		"hi" 'org-insert-heading-after-current
+		"hI" 'org-insert-heading
+
+		;; More cycling options (timestamps, headlines, items, properties)
+		"L" 'org-shiftright
+		"H" 'org-shiftleft
+		"J" 'org-shiftdown
+		"K" 'org-shiftup
+
+		;; Change between TODO sets
+		"C-S-l" 'org-shiftcontrolright
+		"C-S-h" 'org-shiftcontrolleft
+		"C-S-j" 'org-shiftcontroldown
+		"C-S-k" 'org-shiftcontrolup
+
+		;; Subtree editing
+		"Sl" 'org-demote-subtree
+		"Sh" 'org-promote-subtree
+		"Sj" 'org-move-subtree-down
+		"Sk" 'org-move-subtree-up
+
+		;; tables
+		"ta" 'org-table-align
+		"tb" 'org-table-blank-field
+		"tc" 'org-table-convert
+		"tdc" 'org-table-delete-column
+		"tdr" 'org-table-kill-row
+		"te" 'org-table-eval-formula
+		"tE" 'org-table-export
+		"th" 'org-table-previous-field
+		"tH" 'org-table-move-column-left
+		"tic" 'org-table-insert-column
+		"tih" 'org-table-insert-hline
+		"tiH" 'org-table-hline-and-move
+		"tir" 'org-table-insert-row
+		"tI" 'org-table-import
+		"tj" 'org-table-next-row
+		"tJ" 'org-table-move-row-down
+		"tK" 'org-table-move-row-up
+		"tl" 'org-table-next-field
+		"tL" 'org-table-move-column-right
+		"tn" 'org-table-create
+		"tN" 'org-table-create-with-table.el
+		"tr" 'org-table-recalculate
+		"ts" 'org-table-sort-lines
+		"ttf" 'org-table-toggle-formula-debugger
+		"tto" 'org-table-toggle-coordinate-overlays
+		"tw" 'org-table-wrap-region
+
+		;; Multi-purpose keys
+		"," 'org-ctrl-c-ctrl-c
+		"*" 'org-ctrl-c-star
+		"RET" 'org-ctrl-c-ret
+		"-" 'org-ctrl-c-minus
+		"^" 'org-sort
+		"/" 'org-sparse-tree
+
+		"I" 'org-clock-in
+		"n" 'org-narrow-to-subtree
+		"N" 'widen
+		"O" 'org-clock-out
+		"q" 'org-clock-cancel
+		"R" 'org-refile
+		"s" 'org-schedule
+
+		;; insertion of common elements
+		"il" 'org-insert-link
+		"if" 'org-footnote-new
+		)))
+#+END_SRC
+
+Agenda mode too. I use =use-package= rather than the =package!= macro to avoid potential problems when
+quelpa goes looking for a package that doesn't exist.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package org-agenda
+    :after org-plus-contrib
+    :config (general-evil-define-key '(normal visual) org-agenda-mode-map
+              "j" 'org-agenda-next-line
+              "k" 'org-agenda-previous-line))
+#+END_SRC
+
+Org indent mode for life.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package org-indent
+      :commands org-indent-mode
+      :diminish (org-indent-mode . "")
+      :init (add-hook 'org-mode-hook 'org-indent-mode))
+#+END_SRC
+
+evil-org for keybinds I'm too lazy to work out.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! evil-org
+            :commands evil-org-mode
+            :diminish (evil-org-mode . "")
+            :init (add-hook 'org-mode-hook 'evil-org-mode))
+#+END_SRC
+
+Bullets for those sweet utf-8 bullet headers
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! org-bullets
+      :defer t
+      :after org-plus-contrib
+      :init
+      (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+END_SRC
+
+Org pomodoro for the productivity nerd within me.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! org-pomodoro
+      :commands org-pomodoro
+      :defer t
+      :init
+      (general-evil-define-key '(normal visual) org-mode-map
+        :prefix ","
+        "p" 'org-pomodoro))
+#+END_SRC
+** Tooling
+*** Undo Tree
+Undo tree is a cool little tool to navigate through a files
+history. However it's lighter is ugly.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (diminish 'undo-tree-mode "")
+#+END_SRC
+*** Trailing Whitespace
+Trailing whitespace is balrog spawn. Kill it in the thousand flaming
+pits of mordor.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+#+END_SRC
+
+*** Git
+Magit is the git porcelain I didn't know I needed, and now I can't
+live without it.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! magit
+	    :general
+	    (general-define-key :keymaps 'global :prefix "SPC" :states '(normal visual emacs)
+		      "gc" 'magit-commit-popup
+		      "gC" 'magit-checkout
+		      "gd" 'magit-diff-popup
+		      "gD" 'spacemacs/magit-diff-head
+		      "ge" 'magit-ediff-compare
+		      "gE" 'magit-ediff-show-working-tree
+		      "gf" 'magit-fetch-popup
+		      "gF" 'magit-pull-popup
+		      "gi" 'magit-init
+		      "gl" 'magit-log-popup
+		      "gL" 'magit-log-buffer-file
+		      "gP" 'magit-push-popup
+		      "gs" 'magit-status
+		      "gS" 'magit-stage-file
+		      "gU" 'magit-unstage-file)
+	    :config (diminish 'magit-auto-revert-mode))
+#+END_SRC
+
+Make magit play a litter nicer with evil with evil-magit.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! evil-magit :after magit)
+#+END_SRC
+*** Spelling
+How on earth I pass high school English is beyond me.
+
+No one wants to manually configure the dictionary you're using.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! auto-dictionary
+      :defer t
+      :init (add-hook 'flypsell-mode-hook 'auto-dictionary-mode))
+#+END_SRC
+Spelling on the fly.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! flyspell
+      :defer t
+      :diminish (flyspell-mode "λfs")
+      :init
+      (progn
+        (add-hook 'text-mode-hook 'flyspell-mode)
+        (add-hook 'prog-mode-hook 'flyspell-prog-mode)))
+#+END_SRC
+
+100% keen for narrowing my spelling corrections down with ivy. That is
+if the keybinding will work.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! flyspell-correct-ivy
+            :quelpa flyspell-correct
+            :after flyspell
+            :general ("z=" 'flyspell-correct-word-generic))
+#+END_SRC
+
+*** Syntax Checking
+I make mistakes all the time.
+
+In a shock move flycheck checks my syntax
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+
+  (package! flycheck
+      :diminish (flycheck-mode . "λfl")
+      :commands (flycheck-mode flycheck-list-errors flycheck-buffer)
+      :general ("el" 'flycheck-list-errors
+                "en" 'flycheck-next-error
+                "ep" 'flycheck-previous-error)
+      :init (progn (setq ;; Removed checks on idle/change for snappiness
+                    flycheck-check-syntax-automatically '(save mode-enabled)
+                    flycheck-highlighting-mode 'symbols
+                    flycheck-disabled-checkers '(emacs-lisp-checkdoc make))
+
+                   (general-evil-define-key '(normal) flycheck-error-list-mode-map
+                     "C-n" #'flycheck-error-list-next-error
+                     "C-p" #'flycheck-error-list-previous-error
+                     "j"   #'flycheck-error-list-next-error
+                     "k"   #'flycheck-error-list-previous-error
+                     "RET" #'flycheck-error-list-goto-error)
+
+                   (add-hook 'prog-mode-hook #'global-flycheck-mode)))
+#+END_SRC
+
+Flycheck pos tip for those good contextual under point error messages
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! flycheck-pos-tip
+      :after flycheck
+      :config
+      (progn (setq flycheck-pos-tip-timeout 10
+                   flycheck-display-errors-delay 0.5)
+             (flycheck-pos-tip-mode +1)))
+#+END_SRC
+* Configuration
+Whereas modules were about generic setup for languages, tooling,
+etc. The configuration itself is about personal changes I might make.
+
+** Fonts
+Source Code Pro is pro.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (set-face-attribute 'default nil
+                      :family "Source Code Pro"
+                      :height 90
+                      :weight 'normal
+                      :width 'normal)
+#+END_SRC
+** Defaults
+Lets clear up a few of those ugly defaults
+
+Taken from [[https://gitlab.com/buildfunthings/emacs-config/blob/master/loader.org][buildfunthings]]. I like sensible saving defaults.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq make-backup-files t               ; backup of a file the first time it is saved.
+        backup-by-copying t               ; don't clobber symlinks
+        version-control t                 ; version numbers for backup files
+        delete-old-versions t             ; delete excess backup files silently
+        kept-old-versions 6               ; oldest versions to keep when a new numbered backup is made (default: 2)
+        kept-new-versions 9               ; newest versions to keep when a new numbered backup is made (default: 2)
+        auto-save-default t               ; auto-save every buffer that visits a file
+        auto-save-timeout 20              ; number of seconds idle time before auto-save (default: 30)
+        auto-save-interval 200            ; number of keystrokes between auto-saves (default: 300)
+        )
+#+END_SRC
+
+Get those backup outta here
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq
+        backup-directory-alist `(("." . ,(concat user-emacs-directory
+                                                 "backups"))))
+#+END_SRC
+
+Ring no more.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defun no-bell-plz ())
+
+  (setq ring-bell-function 'no-bell-plz)
+  (setq visible-bell nil)
+#+END_SRC
+
+Auto revert from files changed in buffer.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (auto-revert-mode)
+  (setq load-prefer-newer t)
+#+END_SRC
+
+Save millions of keystrokes with this one simple trick!
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (fset 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+Uniquify makes buffers of the same name not of the same name
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package uniquify
+    ;; Buffers get numerically unique identifiers appended
+    ;; e.g buffer<2>
+    :init  (setq uniquify-buffer-name-style 'forward))
+#+END_SRC
+
+Saveplace stores the place I was last at when I open a buffer.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package saveplace
+    :init (progn
+            (setq-default save-place t)
+            (setq save-place-file (concat user-emacs-directory "places"))))
+#+END_SRC
+Bye fringe
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (set-fringe-style '(0 . 0))
+#+END_SRC
+
+Auto fill mode is cool too I guess.
+#+BEGIN_SRC emacs-lisp :tangle
+  (auto-fill-mode 1)
+  (diminish 'auto-fill-mode "")
+#+END_SRC
+** Identity
+I have an email that I use as a primary point of contact, and a name
+(shocker).
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq user-mail-address "jakefaulkn@gmail.com"
+        user-full-name "Jake Faulkner")
+#+END_SRC
+** Org Mode
+Whilst not as massive as some, this may take a while.
+
+Idle time is personal to me, 5 minutes is the average break after a
+pomodoro and a good amount of time for the computer to consider me
+afk.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+(setq org-clock-ide-time 5)
+#+END_SRC
+
+I like my agenda customized quite specifically, and the code is from
+many different places at once. =gtd.org= is my personal organization org
+file, so it needs to be an agenda file.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-agenda-files '("~/gtd.org")
+        ;; ~/gtd.org is symlinked to a file of the same name in ~/Sync/org
+        org-directory "~/Sync/org")
+#+END_SRC
+
+I have a few more todo keywords that fit sort of inline with the
+getting things done methodology
+
+- TODO :: A todo item that can be done
+- NEXT :: A todo item that could be done in the future (it may depend on
+          other todo items)
+- PROJ :: A project header
+- INBOX :: An item that has been added to the inbox
+- WAITING :: An item waiting on some external factor to change (say other
+             people). Requires explanation.
+- DONE :: Completed item
+- CANCELED :: An item that couldn't be completed for some reason (requires explanation).
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "PROJ(p)" "INBOX(i)" "WAITING(w@/!)" "|" "DONE(d!)" "CANCELED(c@)")))
+#+END_SRC
+
+I have two main capture templates, an inbox template and a note
+template.
+
+An example of an inbox item
+
+#+BEGIN_EXAMPLE
+\* INBOX Clean garage
+#+END_EXAMPLE
+
+An example of a note
+
+#+BEGIN_EXAMPLE
+\* Ideas for project :project:
+- maybe make a UI
+- what project was this anyway?
+#+END_EXAMPLE
+
+I use both frequently.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-capture-templates '(("i" "Inbox" entry (file+headline "~/gtd.org" "Inbox") "* INBOX %?\nCaptured: %t ")
+                                ("n" "Note" entry (file+headline "~/gtd.org" "Notes") "* %? %^g\nEntered: %t\n")))
+#+END_SRC
+
+My todo items get nested deeply, so I like to have the refile targets
+reach deeply as well.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-refile-targets '((nil . (:maxlevel . 6))))
+#+END_SRC
+
+A few of the most useful/common tags I use.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-tag-alist '(("@home" . ?h)
+                  ("@school" . ?s)
+                  ("hide" . ?a)
+                  ("@phone" . ?p)))
+#+END_SRC
+
+I hate unchecking checklists when completing a recurring task,
+org-checlist does this automatically among other things.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-modules '(org-checklist))
+#+END_SRC
+
+To avoid clogging up my org mode files with log entries, I pack them
+away in a drawer.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-log-into-drawer t)
+#+END_SRC
+
+Globally enable prettify symbols mode and also make my todo states a
+single unicode character.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (global-prettify-symbols-mode)
+  (add-hook 'org-mode-hook (lambda ()
+                             (cl-loop for pair in '(("NEXT" . ?⇨)
+                                                 ("TODO" . ?✘)
+                                                 ("DONE" . ?✓)
+                                                 ("PROJ" . ?⇶)
+                                                 ("INBOX" . ?★)
+                                                 ("CANCELED" . ?⚐)
+                                                 ("WAITING" . ?✋))
+
+                                   do (push pair prettify-symbols-alist))))
+#+END_SRC
+
+Hide emphasis markers, I know what italics looks like.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-hide-emphasis-markers t)
+#+END_SRC
+
+Add a few hooks to notify me of when a pomodoro starts, ends, and when
+a break ends.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defun jake/notify-send (title body)
+    (call-process "notify-send" nil 0 nil title body))
+  (add-hook 'org-pomodoro-finished-hook (lambda ()
+                                          (jake/notify-send "Pomodoro" "Break Start")))
+
+  (add-hook 'org-pomodoro-started-hook (lambda ()
+                                         (jake/notify-send "Pomodoro" "Pomodoro Started")))
+  (add-hook 'org-pomodoro-break-finished-hook (lambda ()
+                                                (jake/notify-send "Pomodoro" "Break Over")))
+#+END_SRC
+
+Finally, lets get those classy unicode org bullets.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-bullets-bullet-list '("•"))
+#+END_SRC
+*** Agenda
+My agenda is split into a few views
+**** Helper Functions
+I need a couple of helper functions that help me create the agenda
+views I need.
+
+=zin/org-agenda-skip-tag= is a stackoverflow stolen function to skip org
+agenda items with a given tag.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defun zin/org-agenda-skip-tag (tag &optional others)
+      "Skip all entries that correspond to TAG.
+
+  If OTHERS is true, skip all entries that do not correspond to TAG."
+      (let ((next-headline (save-excursion (or (outline-next-heading) (point-max))))
+            (current-headline (or (and (org-at-heading-p)
+                                       (point))
+                                  (save-excursion (org-back-to-heading)))))
+        (if others
+            (if (not (member tag (org-get-tags-at current-headline)))
+                next-headline
+              nil)
+          (if (member tag (org-get-tags-at current-headline))
+              next-headline
+            nil))))
+#+END_SRC
+
+=org-agenda-skip-deadline-if-not-today= skips an org agenda item if it
+isn't today.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defun org-agenda-skip-deadline-if-not-today ()
+      "If this function returns nil, the current match should not be skipped.
+  Otherwise, the function must return a position from where the search
+  should be continued."
+      (ignore-errors
+        (let ((subtree-end (save-excursion (org-end-of-subtree t)))
+              (deadline-day
+               (time-to-days
+                (org-time-string-to-time
+                 (org-entry-get nil "DEADLINE"))))
+              (now (time-to-days (current-time))))
+          (and deadline-day
+               (not (= deadline-day now))
+               subtree-end))))
+#+END_SRC
+Finally set the agenda list to ='()= to prevent an error when we try to add to the list later.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq org-agenda-custom-commands '())
+#+END_SRC
+**** Daily Action List
+=Daily Action List=, bound to =D=, displays a spread of my tasks in order
+or =priority-down=, =deadline-up=, =time-up=, =effort-down=, and
+=tag-up=. Underneath this is a list of my active projects (indicated by
+the PROJ keyword). Below the active projects section is the week at a
+glance, a week's worth of tasks and events for me to reflect on when
+choosing which task to complete next. Finally below this is a list of
+chores (marked with the procedure tag) that need to be done regularly
+like cleaning my room, exercising and other menial tasks. Tasks marked
+with the :hide: are excluded from the regular task lists.
+
+#+BEGIN_EXAMPLE
+Next Actions:
+gtd: [#B] Task A
+english: [#C] Task B
+============
+Active Projects:
+PROJ Complete english assignment
+============
+Week at a Glance:
+Monday    1 May 2017
+english: Task B
+...
+Sunday    7 May 2017
+===========
+Chores to do:
+gtd: Sched. 2x: Clean room :procedure:
+#+END_EXAMPLE
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (add-to-list 'org-agenda-custom-commands '("D" "Daily Action List" ((todo "TODO"
+                                                                   ((org-agenda-overriding-header "Next Actions:")
+                                                                    (org-agenda-sorting-strategy
+                                                                     (quote ((agenda priority-down deadline-up time-up effort-down tag-up) )))
+                                                                    (org-agenda-skip-function
+                                                                     '(zin/org-agenda-skip-tag "hide"))))
+                                                             (todo "PROJ" ((org-agenda-overriding-header "Active Projects:")))
+
+                                                             (agenda "" ((org-agenda-ndays 1)
+									 (org-agenda-overriding-header "Week at a glance:")
+									 (org-agenda-skip-function
+                                                                          '(zin/org-agenda-skip-tag "hide"))
+									 (org-agenda-sorting-strategy
+                                                                          (quote ((agenda priority-down deadline-down time-up effort-down tag-up) )))
+
+									 (org-deadline-warning-days 0)))
+                                                             (agenda "procedure"
+                                                                     ((org-agenda-span 'day)
+                                                                      (org-agenda-skip-function '(org-agenda-skip-deadline-if-not-today))
+                                                                      (org-agenda-overriding-header "Chores to do:"))))))
+#+END_SRC
+
+**** Priority Reconciliation
+=Priority Reconciliation=, bound to =P=, is a list of all tasks due
+relatively soon. This is useful to remind me to bump certain tasks
+priority if they are coming up in the next couple of days.
+
+#+BEGIN_EXAMPLE
+Day-agenda (W18):
+Friday    5 May 2017
+gtd: In 2 d.: TODO [#A] Buy new laptop charger :@home:@phone:
+#+END_EXAMPLE
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (add-to-list 'org-agenda-custom-commands '("P" "Priority Reconciliation" ((agenda "" ((org-deadline-warning-days 2)
+                                                                               (org-agenda-span 'day)
+                                                                               (org-agenda-skip-function '(zin/org-agenda-skip-tag "concrete")))))))
+#+END_SRC
+**** Inbox
+A simple view showing only INBOX items.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (add-to-list 'org-agenda-custom-commands '("I" "Inbox Items" ((todo "INBOX"))))
+#+END_SRC
+** Dired
+
+Make the output more human readable, include all files.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (setq dired-listing-switches "-alh")
+#+END_SRC
+
+Omit =\.*= and =.*~= until I specifically wish to show them
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package dired-x
+    :after dired
+    :general (:keymaps 'dired-mode-map :states '(normal)
+                      "_" 'dired-omit-mode)
+    :init (progn
+            (setq dired-omit-files "^\\(?:\\..*\\|.*~\\)$")
+            (setq-default dired-omit-files t)))
+
+#+END_SRC
+* Outro
+Lets make our user feel at home
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (defun display-startup-echo-area-message ()
+    (message "EMAX has started, welcome home %s!" (user-login-name)))
+#+END_SRC
