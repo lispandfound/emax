@@ -6,7 +6,7 @@ configuration that has been the result of many moves between Spacemacs
 and a thousand iterations of my own configuration.
 
 A lot of this code (like too much to both sourcing for each block) is
-adapted from[[http://spacemacs.org/][ Spacemacs]]). You should use their configuration, not mine.
+adapted from[[http://spacemacs.org/][ Spacemacs]]. You should use their configuration, not mine.
 
 * Setup
 ** Menu and scroll bar
@@ -87,10 +87,10 @@ of binding keys in Evil.
 ~package-enabled-p~ is a function that returns true if the passed
 package =PKG= is not a member of the list ~disabled-packages~.
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
-  (defvar enabled-packages '())
+  (defvar disabled-packages '())
 
   (defun package-enabled-p (pkg)
-    (not (memq pkg enabled-packages)))
+    (not (memq pkg disabled-packages)))
 #+END_SRC
 
 The ~package!~ macro wraps ~use-package~ with feature toggles that allow
@@ -105,7 +105,7 @@ easy enabling and disabling of packages. It also automatically adds
          (use-package ,pkg
            ,@forms))))
 #+END_SRC
-
+** Which Key
 =which-key= provides functionality to discover keybindings.
 
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
@@ -125,15 +125,28 @@ easy enabling and disabling of packages. It also automatically adds
 I also like to have prefixes declared, to provide documentation of the bindings.
 
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
-  (defun declare-prefix (prefix name &optional mode)
-    (let ((key-sequence (format "%s %s"
+
+  (defun prefix-description (key-seq)
+    (let* ((regexp-sequence (concat "\\`" (regexp-quote key-seq) "\\'"))
+	   (replacement (cl-find-if (lambda (el) (equal (caar el) regexp-sequence)) which-key-replacement-alist)))
+      (if replacement
+	  (cddr replacement)
+	"")))
+
+
+  (defun add-prefix (prefix name &optional mode)
+    (let* ((key-sequence (format "%s %s"
 				(if mode
-                                    ","
-                                  "SPC")
-				prefix)))
+				    ","
+				  "SPC")
+				prefix))
+	   (previous-description (prefix-description key-sequence))
+	   (replacement (if (equal previous-description "")
+			    name
+			  (concat previous-description "/" name))))
       (if mode
-	(which-key-add-major-mode-key-based-replacements key-sequence name)
-	(which-key-add-key-based-replacements key-sequence name))))
+	  (which-key-add-major-mode-key-based-replacements key-sequence replacement)
+	(which-key-add-key-based-replacements key-sequence replacement))))
 #+END_SRC
 ** Company
 Too many packages rely on this to not have it in core.
@@ -154,8 +167,10 @@ Basic keybindings to help the average evil/vim user feel at home
   (cl-loop for (prefix . name) in '(("a" . "applications")
 				    ("b" . "buffers")
 				    ("c" . "compiling")
+				    ("e" . "syntax")
 				    ("E" . "emacs")
 				    ("f" . "find")
+				    ("f" . "file")
 				    ("i" . "information")
 				    ("n" . "narrow")
 				    ("s" . "search")
@@ -163,7 +178,7 @@ Basic keybindings to help the average evil/vim user feel at home
 				    ("w" . "window")
 				    ("x" . "formatting")
 				    ("z" . "spelling"))
-	   do (declare-prefix prefix name))
+	   do (add-prefix prefix name))
   (general-define-key :keymaps 'global :states '(normal visual emacs)
                       ":" 'execute-extended-command
                       "ac" 'calculator-dispatch
@@ -955,6 +970,7 @@ live without it.
 		      "gs" 'magit-status
 		      "gS" 'magit-stage-file
 		      "gU" 'magit-unstage-file)
+	    :init (add-prefix "g" "git")
 	    :config (diminish 'magit-auto-revert-mode))
 #+END_SRC
 
