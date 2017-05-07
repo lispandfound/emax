@@ -194,7 +194,7 @@ Basic keybindings to help the average evil/vim user feel at home
                       "nw" 'widen
                       "ss" 'swiper
                       "sj" 'counsel-imenu
-                      "/" 'counsel-pt
+                      "/" 'counsel-rg
                       "fs" 'save-buffer
                       "qq" 'delete-frame
                       "qz" 'evil-save-and-quit
