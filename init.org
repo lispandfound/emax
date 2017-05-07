@@ -130,7 +130,7 @@ I also like to have prefixes declared, to provide documentation of the bindings.
 				(if mode
                                     ","
                                   "SPC")
-				name)))
+				prefix)))
       (if mode
 	(which-key-add-major-mode-key-based-replacements key-sequence name)
 	(which-key-add-key-based-replacements key-sequence name))))
@@ -161,7 +161,8 @@ Basic keybindings to help the average evil/vim user feel at home
 				    ("s" . "search")
 				    ("q" . "quit")
 				    ("w" . "window")
-				    ("x" . "formatting"))
+				    ("x" . "formatting")
+				    ("z" . "spelling"))
 	   do (declare-prefix prefix name))
   (general-define-key :keymaps 'global :states '(normal visual emacs)
                       ":" 'execute-extended-command
