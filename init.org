@@ -124,6 +124,14 @@ easy enabling and disabling of packages. It also automatically adds
 
 I also like to have prefixes declared, to provide documentation of the bindings.
 
+The prefix system I have hashed out works in a simple, but predictable
+manor. When you call =add-prefix= with a prefix and name, it looks up
+=which-key-replacement-alist= to find any prior prefixes declared with a
+description. If it finds a previous prefix description, it appends to
+that, otherwise creating a new prefix. This way, in calling
+=(add-prefix "f" "files")= and then =(add-prefix "f" "find")=, which-key
+will show "f → files/find".
+
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
 
   (defun prefix-description (key-seq)
