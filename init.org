@@ -1,5 +1,13 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: Jake Faulkner
+
+This is my Emacs configuration, a literate (through org-babel)
+configuration that has been the result of many moves between Spacemacs
+and a thousand iterations of my own configuration.
+
+A lot of this code (like too much to both sourcing for each block) is
+adapted from[[http://spacemacs.org/][ Spacemacs]]). You should use their configuration, not mine.
+
 * Setup
 ** Menu and scroll bar
 This should be in the appearance section of the org file, however
