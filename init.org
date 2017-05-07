@@ -102,8 +102,16 @@ easy enabling and disabling of packages. It also automatically adds
 
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
   (package! which-key
-    :diminish ""
-    :config (which-key-mode))
+	    :diminish which-key-mode
+	    :init (setq which-key-special-keys nil
+			  which-key-use-C-h-for-paging t
+			  which-key-prevent-C-h-from-cycling t
+			  which-key-echo-keystrokes 0.02
+			  which-key-max-description-length 32
+			  which-key-sort-order 'which-key-key-order-alpha
+			  which-key-idle-delay 0.4
+			  which-key-allow-evil-operators t)
+	    :config (which-key-mode))
 #+END_SRC
 
 I also like to have prefixes declared, to provide documentation of the bindings.
@@ -111,19 +119,20 @@ I also like to have prefixes declared, to provide documentation of the bindings.
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
   (defun declare-prefix (prefix name &optional mode)
     (let ((key-sequence (format "%s %s"
-                                (if mode
+				(if mode
                                     ","
                                   "SPC")
-                                name)))
+				name)))
       (if mode
-        (which-key-add-major-mode-key-based-replacements key-sequence prefix name)
-        (which-key-add-key-based-replacements key-sequence prefix name))))
+	(which-key-add-major-mode-key-based-replacements key-sequence name)
+	(which-key-add-key-based-replacements key-sequence name))))
 #+END_SRC
 ** Company
 Too many packages rely on this to not have it in core.
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle yes :link comment
   (package! company
-	    :commands '(global-company-mode)
+	    :defer t
+	    :diminish (company-mode . "λac")
 	    :init (add-hook 'after-init-hook 'global-company-mode))
 #+END_SRC
 ** Keybinds
@@ -134,6 +143,18 @@ Basic keybindings to help the average evil/vim user feel at home
   (defun jake/goto-config ()
     (interactive)
     (find-file "~/.emax"))
+  (cl-loop for (prefix . name) in '(("a" . "applications")
+				    ("b" . "buffers")
+				    ("c" . "compiling")
+				    ("E" . "emacs")
+				    ("f" . "find")
+				    ("i" . "information")
+				    ("n" . "narrow")
+				    ("s" . "search")
+				    ("q" . "quit")
+				    ("w" . "window")
+				    ("x" . "formatting"))
+	   do (declare-prefix prefix name))
   (general-define-key :keymaps 'global :states '(normal visual emacs)
                       ":" 'execute-extended-command
                       "ac" 'calculator-dispatch
