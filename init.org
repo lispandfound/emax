@@ -362,12 +362,13 @@ issue [[https://github.com/AnthonyDiGirolamo/airline-themes/issues/25][#25]] on 
 
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
   (package! airline-themes
-	:config (if (daemonp)
-                    (add-hook 'after-make-frame-functions
-                              (lambda (frame)
-				(select-frame frame)
-				(load-theme 'airline-solarized-alternate-gui t)))
-                  (load-theme 'airline-base16-gui-dark t)))
+	    :after powerline
+	    :config (if (daemonp)
+			(add-hook 'after-make-frame-functions
+				  (lambda (frame)
+				    (select-frame frame)
+				    (load-theme 'airline-solarized-alternate-gui t)))
+		      (load-theme 'airline-base16-gui-dark t)))
 #+END_SRC
 **** Splashscreen
 My own package! No functionality, all glamour. Adds a centered
