@@ -241,7 +241,7 @@ Basic keybindings to help the average evil/vim user feel at home
                       "w=" 'balance-windows
                       "xaa" 'align)
   (setq evil-want-Y-yank-to-eol t)
-  (general-define-key :keymaps 'global :prefix ""
+  (general-define-key :keymaps 'global :prefix "" :states '(normal)
                       "J" 'join-line
                       ;; Other bindings will end up here in time
                       )
