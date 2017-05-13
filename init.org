@@ -1168,9 +1168,10 @@ Bye fringe
 #+END_SRC
 
 Auto fill mode is cool too I guess.
-#+BEGIN_SRC emacs-lisp :tangle
-  (auto-fill-mode 1)
-  (diminish 'auto-fill-mode "")
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (add-hook 'text-mode-hook 'turn-on-auto-fill)
+  (add-hook 'auto-fill-mode-hook (lambda ()
+				   (diminish 'auto-fill-mode "")))
 #+END_SRC
 ** Identity
 I have an email that I use as a primary point of contact, and a name
