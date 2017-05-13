@@ -377,7 +377,7 @@ Not gonna lie, this one is mostly superficial.
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
   (package! powerline
             ;; 1.5 tends to be the only height airline renders well at.
-            :init (setq powerline-height (truncate (* 1.5 (frame-char-height)))))
+	   )
 #+END_SRC
 
 This one is especially superficial but damn good looking. The
@@ -387,12 +387,25 @@ issue [[https://github.com/AnthonyDiGirolamo/airline-themes/issues/25][#25]] on 
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
   (package! airline-themes
 	    :after powerline
+	    :init (setq
+		   airline-utf-glyph-separator-left #xe0b0
+		   airline-utf-glyph-separator-right #xe0b2
+		   airline-utf-glyph-subseparator-left #xe0b1
+		   airline-utf-glyph-subseparator-right #xe0b3)
 	    :config (if (daemonp)
-			(add-hook 'after-make-frame-functions
-				  (lambda (frame)
-				    (select-frame frame)
-				    (load-theme 'airline-solarized-alternate-gui t)))
-		      (load-theme 'airline-base16-gui-dark t)))
+			(add-hook 'after-make-frame-functions (lambda (frame)
+								(select-frame frame)
+								(setq powerline-height (truncate (* 1.5 (frame-char-height))))
+								(load-theme 'airline-base16-gui-dark t)))
+			(load-theme 'airline-base16-gui-dark t)))
+#+END_SRC
+#+BEGIN_SRC emacs-lisp :tangle no :comments link
+  (package! spaceline-config
+	    :quelpa spaceline
+	    :init
+	    (setq powerline-height (* 1.5 (frame-char-height)))
+	    :config
+	    (spaceline-spacemacs-theme))
 #+END_SRC
 **** Splashscreen
 My own package! No functionality, all glamour. Adds a centered
@@ -1060,11 +1073,7 @@ etc. The configuration itself is about personal changes I might make.
 ** Fonts
 Source Code Pro is pro.
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
-  (set-face-attribute 'default nil
-                      :family "Source Code Pro"
-                      :height 90
-                      :weight 'normal
-                      :width 'normal)
+  (add-to-list 'default-frame-alist '(font . "Source Code Pro-9"))
 #+END_SRC
 ** Defaults
 Lets clear up a few of those ugly defaults
@@ -1133,9 +1142,8 @@ Saveplace stores the place I was last at when I open a buffer.
 #+END_SRC
 Bye fringe
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
-  (set-fringe-style '(0 . 0))
-  (add-hook 'after-make-frame-functions  (lambda (&rest frames)
-					   (set-fringe-style '(0 . 0))))
+  (add-to-list 'default-frame-alist '(left-fringe . 0))
+  (add-to-list 'default-frame-alist '(right-fringe . 0))
 #+END_SRC
 
 Auto fill mode is cool too I guess.
