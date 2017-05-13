@@ -811,9 +811,9 @@ Utop is on top of the OCaml repl game.
       :diminish (utop-minor-mode . "")
       :after tuareg
       :general
-      (:keymaps 'utop-mode-map :states '(normal insert)
-                        "C-<up>" 'utop-history-goto-prev
-                        "C-<down>" 'utop-history-goto-next)
+      (:keymaps 'utop-mode-map :states '(normal insert) :prefix ""
+			"C-<up>" 'utop-history-goto-prev
+			"C-<down>" 'utop-history-goto-next)
       (general-define-key :keymaps 'tuareg-mode-map :prefix "," :states '(normal visual)
                "si" 'utop
                "sr" 'utop-eval-region)
