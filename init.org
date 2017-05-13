@@ -430,6 +430,29 @@ splashscreen replacement for the default splashscreen.
               (setq initial-buffer-choice #'pspl/goto-splash)))
 #+END_SRC
 ** Languages
+*** General
+
+Smartparens is very, well, smart.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! smartparens
+
+	    :diminish (smartparens-mode . "")
+	    :config
+	    (smartparens-global-strict-mode 1)
+	    (require 'smartparens-config))
+#+END_SRC
+
+Evil surround can surround text in pairs (like brackets and such). I
+am fully aware that this functionality is replicated in smartparens,
+but I am used to evil surround, and so that is how it shall stay.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package evil-surround
+    :defer t
+    :diminish (evil-surround-mode . "")
+    :config (global-evil-surround-mode 1))
+#+END_SRC
 *** Lisps
 I like my lisps.
 **** Clojure
