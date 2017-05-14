@@ -1215,7 +1215,7 @@ Auto fill mode is cool too I guess.
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
   (add-hook 'text-mode-hook 'turn-on-auto-fill)
   (add-hook 'auto-fill-mode-hook (lambda ()
-				   (diminish 'auto-fill-mode "")))
+                                   (diminish 'auto-fill-function "")))
 #+END_SRC
 ** Identity
 I have an email that I use as a primary point of contact, and a name
