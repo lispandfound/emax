@@ -464,6 +464,16 @@ but I am used to evil surround, and so that is how it shall stay.
 #+END_SRC
 *** Lisps
 I like my lisps.
+**** General
+Most lisps come with s-expressions, so any packages that deal with
+those in the general sense are initialized here.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! evil-lisp-state
+            :init (setq evil-lisp-state-global t)
+            :general (:keymaps 'global :states '(normal visual)
+                               "k" 'evil-lisp-state))
+#+END_SRC
 **** Clojure
 Less useful right now, but every now and then some project grabs me
 and clojure becomes the goto choice.
