@@ -59,28 +59,6 @@ A few packages are so essential to the main config that they deserve a
 top level heading. Core editor functionality, keybindings, etc, are
 included here.
 
-** Evil
-I am /among the stars aboard the Evil flagship/ to quote the [[https://github.com/syl20bnr/spacemacs][spacemacs]]
-setup process. Vim keybindings are the *only* part of vim I want in my
-configuration.
-
-#+BEGIN_SRC emacs-lisp :tangle yes :comments link
-  (use-package evil
-    :quelpa t
-    :config (evil-mode 1))
-#+END_SRC
-** General
-[[https://github.com/noctuid/general.el][General]] is the most generic name for a suitably general package. It
-provides a high level keybinding interface to ease the relative pain
-of binding keys in Evil.
-
-#+BEGIN_SRC emacs-lisp :tangle yes :comments link
-  (use-package general
-    :quelpa t
-    :init (setq general-default-keymaps 'evil-normal-state-map
-                general-default-prefix "SPC")
-    :config (general-evil-setup t))
-#+END_SRC
 ** Macros
 ~package-enabled-p~ is a function that returns true if the passed
 package =PKG= is not a member of the list ~disabled-packages~.
@@ -102,6 +80,51 @@ easy enabling and disabling of packages. It also automatically adds
       `(when (package-enabled-p ',pkg)
          (use-package ,pkg
            ,@forms))))
+#+END_SRC
+** Evil
+I am /among the stars aboard the Evil flagship/ to quote the [[https://github.com/syl20bnr/spacemacs][spacemacs]]
+setup process. Vim keybindings are the *only* part of vim I want in my
+configuration.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package evil
+    :quelpa t
+    :config (evil-mode 1))
+#+END_SRC
+
+=evil-iedit-state= gives me sublime text multiple cursors editing
+powers, and then some.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! evil-iedit-state
+    :commands (evil-iedit-state evil-iedit-state/iedit-mode)
+    :init
+    (progn
+      (setq iedit-current-symbol-default t
+            iedit-only-at-symbol-boundaries t
+            iedit-toggle-key-default nil)
+      (general-define-key :keymaps 'global :states '(normal visual)
+                          "se" 'evil-iedit-state/iedit-mode)))
+#+END_SRC
+
+Rainbow delimiters so that I can read the parenthesis a little easier.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! rainbow-delimiters
+            :commands (rainbow-delimiters-mode)
+            :init (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
+#+END_SRC
+** General
+[[https://github.com/noctuid/general.el][General]] is the most generic name for a suitably general package. It
+provides a high level keybinding interface to ease the relative pain
+of binding keys in Evil.
+
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (use-package general
+    :quelpa t
+    :init (setq general-default-keymaps 'evil-normal-state-map
+                general-default-prefix "SPC")
+    :config (general-evil-setup t))
 #+END_SRC
 ** Which Key
 =which-key= provides functionality to discover keybindings.
