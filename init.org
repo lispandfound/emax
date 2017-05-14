@@ -446,10 +446,9 @@ am fully aware that this functionality is replicated in smartparens,
 but I am used to evil surround, and so that is how it shall stay.
 
 #+BEGIN_SRC emacs-lisp :tangle yes :comments link
-  (use-package evil-surround
-    :defer t
-    :diminish (evil-surround-mode . "")
-    :config (global-evil-surround-mode 1))
+  (package! evil-surround
+    :init
+    (global-evil-surround-mode 1))
 #+END_SRC
 *** Lisps
 I like my lisps.
