@@ -271,6 +271,18 @@ anywhere.
 	    :diminish (counsel-mode . "")
             :config (counsel-mode))
 #+END_SRC
+**** Smooth Scrolling
+I don't like the jarring experience of having an entire page jump from
+bottom to top when I scroll by default. So instead I prefer to have
+smooth scrolling have lines faze out one by one off the screen.
+#+BEGIN_SRC emacs-lisp :tangle yes :comments link
+  (package! smooth-scrolling
+            :config (if (daemonp)
+                        (add-hook 'after-make-frame-functions (lambda (frame)
+                                                                (select-frame frame)
+                                                                (smooth-scrolling-mode 1)))
+                      (smooth-scrolling-mode 1)))
+#+END_SRC
 *** Appearance <<appearance>>
 **** Golden Ratio
 I hold this in the appearance category even though it could also be
